@@ -39,7 +39,7 @@ class BackgroundPrinter(threading.Thread):
                 queue_item = database.get_next_print_queue_item(self.db_session)
                 if queue_item:
                     print("PRINTING BADGE FOR {}".format(queue_item.name))
-                    badge.create_label_image(queue_item.name, queue_item.order_id, self.day_password, self.event_name, queue_item.attendee.ticket_name, use_nijis=config.use_nijis, nijis_url=config.nijis_base_url)
+                    badge.create_label_image(queue_item.attendee.first_name, queue_item.attendee.surname, queue_item.attendee.company, queue_item.attendee.position, self.event_name)
                     database.mark_queue_item_as_printed(self.db_session, queue_item)
                 else:
                     time.sleep(0.5)
@@ -80,6 +80,7 @@ class EventbriteWatcher(threading.Thread):
         for attendee in raw_attendees:
             new_attendee = (models.Attendee(attendee_id=int(attendee["id"]), order_id=int(attendee["order_id"]), event_id=int(event_id)
                                             , first_name=attendee["profile"]["first_name"], surname=attendee["profile"]["last_name"],
+                                            company = attendee["profile"]["company"], position = attendee["profile"]["job_title"],
                                             status=attendee["status"], ticket_name=attendee["ticket_class_name"]))
             new_attendee.event_name = chosen_event
             attendees.append(new_attendee)

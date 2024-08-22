@@ -2,9 +2,11 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+import os
 
 Base = declarative_base()
-engine = create_engine('sqlite:////britebadge.db?check_same_thread=False')
+file_path = os.path.abspath(os.getcwd())+"\database_badge.db"
+engine = create_engine('sqlite:///' + file_path + '?check_same_thread=False')
 
 
 class Configuration(Base):
@@ -31,8 +33,10 @@ class Attendee(Base):
     attendee_id = Column(Integer, autoincrement=True, primary_key=True, unique=True, nullable=False)
     order_id = Column(Integer, nullable=False)
     event_id = Column(Integer, nullable=False)
-    first_name = Column(String(50), nullable=False)
-    surname = Column(String(50), nullable=False)
+    first_name = Column(String(100), nullable=False)
+    surname = Column(String(100), nullable=False)
+    company = Column(String(100), nullable=True)
+    position = Column(String(100), nullable=True)
     status = Column(String(20))
     badges_printed = relationship("PrintQueue", foreign_keys=PrintQueue.attendee_id)
 

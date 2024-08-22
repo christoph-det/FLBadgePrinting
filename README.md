@@ -22,3 +22,7 @@ BriteBadge queries Eventbrite every fixed amount of time, as defined in the dela
 ### Custom badge designs   
 Tweaking the badge design isn't overly complicated. You need to edit the badge.py file in the `create_label_image` function.   
 This is where the badge itself is built up, using PIL statements. These can be tweaked or changed as needed.   
+
+### Printing
+
+For setting up the printer look at: https://pypi.org/project/brother-ql/
