@@ -23,7 +23,7 @@ def write_ip():
         display_text(f"IP:{ip}")
     except ValueError:
         display_text("Error - No IP!")
-    except PermissionError:
+    except Exception:
         display_text("Permission to IP denied!")
 
 
