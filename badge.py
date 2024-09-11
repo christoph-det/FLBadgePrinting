@@ -6,11 +6,27 @@ import brother_ql
 from brother_ql.raster import BrotherQLRaster
 from brother_ql.backends.helpers import send
 
+import usb.core
+import usb.util
+
+printer_found = usb.core.find(idVendor=0x4F9)
+
+printer_vendor = hex(printer_found.idVendor)
+printer_product = hex(printer_found.idProduct)
+
+
+if printer_found is None:
+    raise ValueError("Printer not found")
+
 # USB or TCP
-PRINTER_NAME = 'Brother QL-570'
-PRINTER_IDENTIFIER = 'usb://0x04f9:0x2028'
+PRINTER_NAME = 'QL-810W'
+# Can be found 
+# PRINTER_IDENTIFIER = 'usb://04f9:209c'
+PRINTER_IDENTIFIER = f"usb://{printer_vendor}:{printer_product}"
+print(PRINTER_IDENTIFIER)
 # LABEL_FORMAT = '29x90'
 LABEL_FORMAT = '62'
+#PRINTABLE_SIZE = (1050, 696)
 PRINTABLE_SIZE = (1050, 696)
 
 
@@ -21,14 +37,14 @@ def generate_qr_code(URL):
 
 def create_label_image(first_name, surname, company, position, eventname):
    
-    # qr_code = generate_qr_code('{}/qr/{}/{}'.format(nijis_url, order_id, password))
 
+    future_law_logo = Image.open('future_law_logo.jpg')
     font_face = "arial.ttf"
     
     biggest_font = ImageFont.truetype(font_face, 110)
     big_font = ImageFont.truetype(font_face, 75)
-    normal_font = ImageFont.truetype(font_face, 50)
-    small_font = ImageFont.truetype(font_face, 45)
+    normal_font = ImageFont.truetype(font_face, 45)
+    small_font = ImageFont.truetype(font_face, 38)
     img = Image.new('L', PRINTABLE_SIZE, color='white')
 
     d = ImageDraw.Draw(img)
@@ -44,13 +60,16 @@ def create_label_image(first_name, surname, company, position, eventname):
     d.text((40, 440), position, fill="black", font=normal_font)
     d.text((40, 610), eventname, fill="black", font=small_font)
 
-    # TODO: add image of logo
+    # rotate image
+
+    if "legal tech" in eventname.lower():
+        img.paste(future_law_logo.resize((300, 53), Image.ANTIALIAS), (720, 600))
     
-    
-    # if use_nijis:
-    #     d.text((20, 250), "Workshops - {}".format(nijis_url), fill="black", font=jam_font)
-    #    img.paste(qr_code.resize((270, 270), Image.ANTIALIAS), (720, 0))
-    #    d.text((740, 250), "Scan me with your phone \n to book into workshops!", fill="black", font=qr_font)
+    # QR Code
+    # qr_code = generate_qr_code('https:future-law.eu')
+    # img.paste(qr_code.resize((270, 270), Image.ANTIALIAS), (720, 0))
+
+    img = img.rotate(90, expand=True)
 
     img.save('generated_badge.png')
     sleep(0.1)
@@ -59,5 +78,5 @@ def create_label_image(first_name, surname, company, position, eventname):
 
 def send_to_printer(path):
     printer = BrotherQLRaster(PRINTER_NAME)
-    print_data = brother_ql.brother_ql_create.convert(printer, [path], LABEL_FORMAT, dither=True, rotate="auto", hq=False)
+    print_data = brother_ql.brother_ql_create.convert(printer, [path], LABEL_FORMAT, dither=True, hq=False)
     send(print_data, PRINTER_IDENTIFIER)

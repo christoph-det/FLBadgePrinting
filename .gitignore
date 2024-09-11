@@ -72,3 +72,5 @@ venv/
 secrets/config.py
 britebadge.db
 generated_badge.png
+
+.DS_Store

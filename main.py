@@ -45,8 +45,8 @@ class BackgroundPrinter(threading.Thread):
                     time.sleep(0.5)
             except Exception as e:
                 print("---------------")
-                print("EXCEPTION!?!?!?")
-                print(e)
+                print("EXCEPTION for Printing Badge")
+                print(e.msg)
                 print("---------------")
                 time.sleep(3)
 
@@ -67,8 +67,8 @@ class EventbriteWatcher(threading.Thread):
                 self.update()
             except Exception as e:
                 print("---------------")
-                print("EXCEPTION!?!?!?")
-                print(e)
+                print("EXCEPTION for Updating Display")
+                print(e.msg)
                 print("---------------")
 
 

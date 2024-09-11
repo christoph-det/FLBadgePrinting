@@ -14,6 +14,9 @@ Like eventbadge, BriteBadge is designed to be used with a Brother QL-570 label p
 4. Customise your label design (see below).   
 5. To run the application, run with `main.py` file with Python 3.   
 
+### Mac:
+USB Driver: brew install libusb
+Create a syslink to find libusb in path: sudo ln -s /opt/homebrew/lib/libusb-1.0.0.dylib //usr/local/lib/libusb.dylib
 
 ### Rate limits   
 It is worth keeping in mind that Eventbrite has API rate limits. The most recent rate limits can be found [here](https://www.eventbrite.com/platform/docs/rate-limits).   
@@ -26,3 +29,4 @@ This is where the badge itself is built up, using PIL statements. These can be t
 ### Printing
 
 For setting up the printer look at: https://pypi.org/project/brother-ql/
+
