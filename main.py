@@ -19,7 +19,11 @@ import badge
 import secrets.config as config
 
 app = Flask(__name__)
-chosen_event = eventbrite_interactions.get_most_recent_eventbrite_event()
+try:
+    chosen_event = eventbrite_interactions.get_most_recent_eventbrite_event()
+except Exception as e:
+    print("Expection: No event found on Eventrbite, possible Connection Error. Offline Fallback Mode")
+    chosen_event = "Test Event"
 
 flask_db_session = database.setup_db_connection()
 
@@ -77,6 +81,7 @@ class EventbriteWatcher(threading.Thread):
         print("Checking for updates")
         attendees = []
         raw_attendees = eventbrite_interactions.get_eventbrite_attendees_for_event(event_id, changed_since=database.get_last_check_time(self.db_session))["attendees"]
+        print ("{} new attendees found".format(len(raw_attendees)))
         for attendee in raw_attendees:
             new_attendee = (models.Attendee(attendee_id=int(attendee["id"]), order_id=int(attendee["order_id"]), event_id=int(event_id)
                                             , first_name=attendee["profile"]["first_name"], surname=attendee["profile"]["last_name"],

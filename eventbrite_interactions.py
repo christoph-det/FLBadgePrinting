@@ -36,9 +36,11 @@ class MyEventbrite(Eventbrite):
         while True:
             r = self.get_event_attendees(event_id, status, changed_since, page=page)
             if 'attendees' not in r:
+                print ("No more attendees found")
                 break
             attendees.extend(r['attendees'])
             if r['pagination']['page_count'] <= page:
+                print ("No more pages found")
                 break
             page += 1
         print("{} queries made!".format(page))

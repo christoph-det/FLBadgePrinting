@@ -29,14 +29,14 @@ class PrintQueue(Base):
 class Attendee(Base):
     __tablename__ = "attendees"
     event_name = ""
-    ticket_name = Column(String(50), nullable=False)
+    ticket_name = Column(String(100), nullable=False)
     attendee_id = Column(Integer, autoincrement=True, primary_key=True, unique=True, nullable=False)
     order_id = Column(Integer, nullable=False)
     event_id = Column(Integer, nullable=False)
-    first_name = Column(String(100), nullable=False)
-    surname = Column(String(100), nullable=False)
-    company = Column(String(100), nullable=True)
-    position = Column(String(100), nullable=True)
+    first_name = Column(String(150), nullable=False)
+    surname = Column(String(150), nullable=False)
+    company = Column(String(150), nullable=True)
+    position = Column(String(150), nullable=True)
     status = Column(String(20))
     badges_printed = relationship("PrintQueue", foreign_keys=PrintQueue.attendee_id)
 

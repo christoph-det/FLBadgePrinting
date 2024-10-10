@@ -7,7 +7,9 @@ from brother_ql.raster import BrotherQLRaster
 from brother_ql.backends.helpers import send
 
 import usb.core
-import usb.util
+
+import unicodedata
+
 
 printer_found = usb.core.find(idVendor=0x4F9)
 
@@ -37,6 +39,12 @@ def generate_qr_code(URL):
 
 def create_label_image(first_name, surname, company, position, eventname):
    
+    first_name = unicodedata.normalize('NFC', first_name)
+    surname = unicodedata.normalize('NFC', surname)
+    company = unicodedata.normalize('NFC', company)
+    position = unicodedata.normalize('NFC', position)
+    eventname = unicodedata.normalize('NFC', eventname)
+
 
     future_law_logo = Image.open('future_law_logo.jpg')
     font_face = "arial.ttf"
