@@ -4,6 +4,7 @@ import time
 import netifaces
 from secrets.config import delay_between_eventbrite_queries, eventbrite_event_id
 
+
 import requests
 from flask import Flask, render_template, redirect, request
 
@@ -17,6 +18,10 @@ import threading
 import badge
 
 import secrets.config as config
+
+
+
+
 
 app = Flask(__name__)
 try:

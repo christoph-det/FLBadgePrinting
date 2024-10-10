@@ -1,3 +1,4 @@
+import terminal_colors
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from time import sleep
@@ -13,19 +14,20 @@ import unicodedata
 
 printer_found = usb.core.find(idVendor=0x4F9)
 
-printer_vendor = hex(printer_found.idVendor)
-printer_product = hex(printer_found.idProduct)
+if printer_found:
+    printer_vendor = hex(printer_found.idVendor)
+    printer_product = hex(printer_found.idProduct)
+    PRINTER_IDENTIFIER = f"usb://{printer_vendor}:{printer_product}"
+    print(PRINTER_IDENTIFIER)
+else:
+    print(terminal_colors.RED + "Error: No printer connected. Limited functionality." + terminal_colors.RESET)
 
 
-if printer_found is None:
-    raise ValueError("Printer not found")
 
 # USB or TCP
 PRINTER_NAME = 'QL-810W'
 # Can be found 
 # PRINTER_IDENTIFIER = 'usb://04f9:209c'
-PRINTER_IDENTIFIER = f"usb://{printer_vendor}:{printer_product}"
-print(PRINTER_IDENTIFIER)
 # LABEL_FORMAT = '29x90'
 LABEL_FORMAT = '62'
 #PRINTABLE_SIZE = (1050, 696)
