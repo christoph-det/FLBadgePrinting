@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>Britebadge</h1>
+<h3>Manual Printing</h3>
+
+<script>
+    function clearFields() {
+        document.getElementById("fname").value = "";
+        document.getElementById("lname").value = "";
+        document.getElementById("position").value = "";
+        document.getElementById("company").value = "";
+    }
+
+    function printBadge() {
+        $.ajax({
+        type: "POST",
+        url: "/start_manual_print",
+        data: {
+            fname: document.getElementById("fname").value,
+            lname: document.getElementById("lname").value,
+            position: document.getElementById("position").value,
+            company: document.getElementById("company").value,
+            conference: document.getElementById("conference").value
+
+
+        },
+        success: function (result) {
+            alert("Printing");
+        },
+        error: function (result) {
+            alert("Printing failed");
+
+        }
+    });
+    }
+</script>
+    
+<br>
+<button id="submit_button" class="btn btn-success" onclick="printBadge()" value="val_1" name="but1">Print Badge</button>  
+<button id="clear_button" class="btn btn-danger" onclick="clearFields()">Clear Fields</button>
+<br>
+<br>
+    
+<table>
+    <tr bgcolor="#d3d3d3">
+        <th>Field</th>
+        <th>Text</th>
+    </tr>
+    <tbody>
+        <tr>
+            <td>Vorname</td>
+            <td><input type="text" id="fname" name="fname"></td>
+        </tr>
+        <tr>
+            <td>Nachname</td>
+            <td><input type="text" id="lname" name="lname"></td>
+        </tr>
+        <tr>
+            <td>Position</td>
+            <td><input type="text" id="position" name="position"></td>
+        </tr>
+        <tr>
+            <td>Unternehmen</td>
+            <td><input type="text" id="company" name="company"></td>
+        </tr>
+        <tr>
+            <td>Konferenzname</td>
+            <td><input type="text" id="conference" name="conference"></td>
+        </tr>
+    </tbody>
+
+</table>
+{% endblock %}

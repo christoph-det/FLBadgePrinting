@@ -3,7 +3,7 @@ import sys
 import time
 import netifaces
 from secrets.config import delay_between_eventbrite_queries, eventbrite_event_id
-
+import traceback
 
 import requests
 from flask import Flask, render_template, redirect, request
@@ -48,14 +48,17 @@ class BackgroundPrinter(threading.Thread):
                 queue_item = database.get_next_print_queue_item(self.db_session)
                 if queue_item:
                     print("PRINTING BADGE FOR {}".format(queue_item.name))
-                    badge.create_label_image(queue_item.attendee.first_name, queue_item.attendee.surname, queue_item.attendee.company, queue_item.attendee.position, self.event_name)
+                    if hasattr(queue_item, 'manual_data'):
+                        badge.create_label_image(queue_item.manual_data['fname'], queue_item.manual_data['lname'], queue_item.manual_data['company'], queue_item.manual_data['position'], queue_item.manual_data['conference'])
+                    else:
+                        badge.create_label_image(queue_item.attendee.first_name, queue_item.attendee.surname, queue_item.attendee.company, queue_item.attendee.position, self.event_name)
                     database.mark_queue_item_as_printed(self.db_session, queue_item)
                 else:
                     time.sleep(0.5)
             except Exception as e:
                 print("---------------")
                 print("EXCEPTION for Printing Badge")
-                print(e.msg)
+                print(str(e))
                 print("---------------")
                 time.sleep(3)
 
@@ -77,7 +80,8 @@ class EventbriteWatcher(threading.Thread):
             except Exception as e:
                 print("---------------")
                 print("EXCEPTION for Updating Display")
-                print(e.msg)
+                print(str(e))
+                traceback.print_exc()
                 print("---------------")
 
 
@@ -123,6 +127,19 @@ def home():
 @app.route("/print_queue")
 def print_queue():
     return render_template("print_queue.html")
+
+@app.route("/manual_printing")
+def manual_printing():
+    return render_template("manual_printing.html")
+
+@app.route("/start_manual_print", methods=['GET', 'POST'])
+def start_manual_printing():
+    fname = request.form['fname']
+    lname = request.form['lname']
+    position = request.form['position']
+    company = request.form['company']
+    conference = request.form['conference']
+    database.manual_add_to_print_queue(flask_db_session, fname, lname, position, company, conference)
 
 
 @app.route("/get_print_queue_ajax", methods=['GET', 'POST'])

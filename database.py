@@ -90,3 +90,14 @@ def add_to_print_queue(db_session, attendee_id):
     attendee = db_session.query(Attendee).filter(Attendee.attendee_id == int(attendee_id)).first()
     db_session.add(PrintQueue(name="{} {}".format(attendee.first_name, attendee.surname), order_id=attendee.order_id, attendee_id=attendee.attendee_id, printed=False))
     db_session.commit()
+
+def manual_add_to_print_queue(db_session, fname, lname, position, company, conference):
+    attendee_data = {
+        "fname": fname,
+        "lname": lname,
+        "position": position,
+        "company": company,
+        "conference": conference
+    }
+    db_session.add(PrintQueue(name="{} {}".format(fname, lname), order_id=0, attendee_id=0, manual_data=attendee_data, printed=False))
+    db_session.commit()

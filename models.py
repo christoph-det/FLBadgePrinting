@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -23,6 +23,7 @@ class PrintQueue(Base):
     order_id = Column(Integer, nullable=False)
     attendee_id = Column(ForeignKey('attendees.attendee_id'), nullable=False)
     printed = Column(Boolean, nullable=False)
+    manual_data = Column(JSON, nullable=True)
     attendee = relationship("Attendee")
 
 
