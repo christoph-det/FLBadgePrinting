@@ -73,7 +73,7 @@ def create_label_image(first_name, surname, company, position, eventname):
     # rotate image
 
     if "legal tech" in eventname.lower():
-        img.paste(future_law_logo.resize((300, 53), Image.ANTIALIAS), (720, 600))
+        img.paste(future_law_logo.resize((300, 53), Image.LANCZOS), (720, 600))
     
     # QR Code
     # qr_code = generate_qr_code('https:future-law.eu')
