@@ -1,11 +1,39 @@
 {% extends "layout.html" %}
 
 {% block content %}
+
+<script>
+    function searchForAttendees() {
+    // Get the input value
+    let input = document.getElementById('searchInput').value.toLowerCase();
+    
+    // Get the table and all rows
+    let table = document.getElementById('attendees');
+    let rows = table.getElementsByTagName('tr');
+    
+    // Loop through all rows (except the header)
+    for (let i = 1; i < rows.length; i++) {
+        let firstCol = rows[i].getElementsByTagName('td')[0].textContent.toLowerCase();
+        let secondCol = rows[i].getElementsByTagName('td')[1].textContent.toLowerCase();
+
+        // Check if the input value matches any part of the first or second column
+        if (firstCol.includes(input) || secondCol.includes(input)) {
+            rows[i].style.display = ''; // Show the row
+        } else {
+            rows[i].style.display = 'none'; // Hide the row
+        }
+    }
+}
+</script>
+
 <h1>Britebadge</h1>
 <h3>{{ event_name }}</h3>
 <a href="/reload_all_attendees" class="btn btn-info" role="button">Reload all attendees</a>
     <br>
-<table>
+
+<input placeholder="Search..." id="searchInput" onkeyup="searchForAttendees()" style="margin: 20px 0; width: 100%; padding: 10px 0 10px 10px;">    
+
+<table id="attendees" style="width: 100%;">
     <tr bgcolor="#d3d3d3">
         <th>First Name</th>
         <th>Surname</th>
