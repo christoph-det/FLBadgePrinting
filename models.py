@@ -29,7 +29,7 @@ class PrintQueue(Base):
 
 class Attendee(Base):
     __tablename__ = "attendees"
-    event_name = ""
+    event_name = Column(String(200), nullable=False)
     ticket_name = Column(String(100), nullable=False)
     attendee_id = Column(Integer, autoincrement=True, primary_key=True, unique=True, nullable=False)
     order_id = Column(Integer, nullable=False)
