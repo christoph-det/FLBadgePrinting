@@ -147,6 +147,7 @@ def start_manual_printing():
     company = request.form['company']
     conference = request.form['conference']
     database.manual_add_to_print_queue(flask_db_session, fname, lname, position, company, conference)
+    return ""
 
 
 @app.route("/get_print_queue_ajax", methods=['GET', 'POST'])
