@@ -18,6 +18,15 @@ Like eventbadge, BriteBadge is designed to be used with a Brother QL-570 label p
 USB Driver: brew install libusb
 Create a syslink to find libusb in path: sudo ln -s /opt/homebrew/lib/libusb-1.0.0.dylib //usr/local/lib/libusb.dylib
 
+### Windows:
+pip install pyusb
+pip install libusb
+\venv\Lib\site-packages\libusb\_platform\_windows\x64
+and
+\venv\Lib\site-packages\libusb\_platform\_windows\x32
+to PATH
+
+
 ### Rate limits   
 It is worth keeping in mind that Eventbrite has API rate limits. The most recent rate limits can be found [here](https://www.eventbrite.com/platform/docs/rate-limits).   
 BriteBadge queries Eventbrite every fixed amount of time, as defined in the delay configuration value, it is worth doing some quick maths to make sure you aren't going to hit the hourly/daily rate limits on the API.   

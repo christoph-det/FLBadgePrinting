@@ -61,6 +61,7 @@ class BackgroundPrinter(threading.Thread):
             except Exception as e:
                 print("---------------")
                 print("EXCEPTION for Printing Badge")
+                traceback.print_exc()
                 print(str(e))
                 print("---------------")
                 time.sleep(3)
