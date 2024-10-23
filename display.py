@@ -7,7 +7,7 @@ try:
 except ImportError:
     DISPLAY = False
 
-import netifaces as ni
+# import netifaces as ni
 import datetime
 
 try: # Check if HAT actually attached
@@ -19,7 +19,8 @@ except:
 
 def write_ip():
     try:
-        ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
+        ip = ""
+        # ip = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
         display_text(f"IP:{ip}")
     except ValueError:
         display_text("Error - No IP!")

@@ -1,7 +1,7 @@
 import json
 import sys
 import time
-import netifaces
+# import netifaces
 from secrets.config import delay_between_eventbrite_queries, eventbrite_event_id
 import traceback
 import terminal_colors
