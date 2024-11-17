@@ -4,12 +4,15 @@
 <h1>Britebadge</h1>
 <h3>Manual Printing</h3>
 
+<p>This screen can be used to print attendees, who are not registered in Eventbrite. Their names and internal notes will be automatically stored locally.</p>
+
 <script>
     function clearFields() {
         document.getElementById("fname").value = "";
         document.getElementById("lname").value = "";
         document.getElementById("position").value = "";
         document.getElementById("company").value = "";
+        document.getElementById("note").value = "";
     }
 
     function printBadge() {
@@ -21,7 +24,8 @@
             lname: document.getElementById("lname").value,
             position: document.getElementById("position").value,
             company: document.getElementById("company").value,
-            conference: document.getElementById("conference").value
+            conference: document.getElementById("conference").value,
+            note: document.getElementById("note").value
 
 
         },
@@ -67,6 +71,10 @@
         <tr>
             <td>Konferenzname</td>
             <td><input type="text" id="conference" name="conference" style="width: 100%; height: 40px;"></td>
+        </tr>
+        <tr>
+            <td>Intere Notiz</td>
+            <td><input type="text" id="note" name="note" style="width: 100%; height: 40px;"></td>
         </tr>
     </tbody>
 

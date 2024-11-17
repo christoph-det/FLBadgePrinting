@@ -147,7 +147,13 @@ def start_manual_printing():
     position = request.form['position']
     company = request.form['company']
     conference = request.form['conference']
+    internal_note = request.form['note']
     database.manual_add_to_print_queue(flask_db_session, fname, lname, position, company, conference)
+
+    # save attenndee data to csv file for further reference
+    with open('manual_attendees.csv', 'a') as f:
+        f.write("{},{},{},{},{},{},{}\n".format(fname, lname, position, company, conference, internal_note, time.strftime("%Y-%m-%d %H:%M:%S")))
+
     return ""
 
 
