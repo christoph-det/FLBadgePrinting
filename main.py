@@ -140,6 +140,10 @@ def print_queue():
 def manual_printing():
     return render_template("manual_printing.html")
 
+@app.route("/bulk_printing")
+def bulk_printing():
+    return render_template("bulk_printing.html")
+
 @app.route("/start_manual_print", methods=['GET', 'POST'])
 def start_manual_printing():
     fname = request.form['fname']
@@ -154,6 +158,11 @@ def start_manual_printing():
     with open('manual_attendees.csv', 'a') as f:
         f.write("{},{},{},{},{},{},{}\n".format(fname, lname, position, company, conference, internal_note, time.strftime("%Y-%m-%d %H:%M:%S")))
 
+    return ""
+
+@app.route("/start_bulk_print", methods=['POST'])
+def start_bulk_printing():
+    database.add_all_attendees_to_queue(flask_db_session)
     return ""
 
 

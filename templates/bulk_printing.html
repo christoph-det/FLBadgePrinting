@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>Bulk Print all Badges</h1>
+
+<p>This screen can be used to print badges for all attendees. ATTENTION: only use when necessary, because of high paper usage!</p>
+
+<script>
+
+    function printAllBadges() {
+        if (window.confirm("Are you sure you want to print all badges? This will use a lot of paper!")) {
+            $.ajax({
+                type: "POST",
+                url: "/start_bulk_print",
+                data: {},
+                success: function (result) {
+                    alert("Printing");
+                },
+                error: function (result) {
+                    alert("Printing failed");
+                }
+            });
+        } else {
+            alert("Printing cancelled");
+        }
+    }
+
+</script>
+    
+<br>
+<button id="submit_button" class="btn btn-success" onclick="printAllBadges()" value="val_1" name="but1">Print All Badges</button>  
+
+
+{% endblock %}

@@ -101,3 +101,10 @@ def manual_add_to_print_queue(db_session, fname, lname, position, company, confe
     }
     db_session.add(PrintQueue(name="{} {}".format(fname, lname), order_id=0, attendee_id=0, manual_data=attendee_data, printed=False))
     db_session.commit()
+
+   
+def add_all_attendees_to_queue(db_session):
+    attendees = db_session.query(Attendee).all()
+    for attendee in attendees:
+        db_session.add(PrintQueue(name="{} {}".format(attendee.first_name, attendee.surname), order_id=attendee.order_id, attendee_id=attendee.attendee_id, printed=False))
+    db_session.commit()
