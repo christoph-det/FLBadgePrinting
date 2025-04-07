@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON, BigInteger
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -40,6 +40,7 @@ class Attendee(Base):
     position = Column(String(150), nullable=True)
     status = Column(String(20))
     badges_printed = relationship("PrintQueue", foreign_keys=PrintQueue.attendee_id)
+    order_date = Column(BigInteger, nullable=False)
 
 
 Base.metadata.create_all(engine)

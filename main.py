@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import sys
 import time
@@ -98,10 +99,11 @@ class EventbriteWatcher(threading.Thread):
             raw_attendees = eventbrite_interactions.get_eventbrite_attendees_for_event(event_id, changed_since=database.get_last_check_time(self.db_session))["attendees"]
             print ("{} new attendees found".format(len(raw_attendees)))
             for attendee in raw_attendees:
+                order_date = time.mktime(time.strptime(attendee["created"], "%Y-%m-%dT%H:%M:%SZ"))
                 new_attendee = (models.Attendee(attendee_id=int(attendee["id"]), order_id=int(attendee["order_id"]), event_id=int(event_id)
                                                 , first_name=attendee["profile"]["first_name"], surname=attendee["profile"]["last_name"], event_name=str(chosen_event["name"]["text"]),
                                                 company = attendee["profile"]["company"], position = attendee["profile"]["job_title"],
-                                                status=attendee["status"], ticket_name=attendee["ticket_class_name"]))
+                                                status=attendee["status"], ticket_name=attendee["ticket_class_name"], order_date=order_date))
                 attendees.append(new_attendee)
             current_attendees = database.get_current_attendees(self.db_session, event_id)
             database.compare_attendees(self.db_session, current_attendees, attendees)
@@ -162,7 +164,16 @@ def start_manual_printing():
 
 @app.route("/start_bulk_print", methods=['POST'])
 def start_bulk_printing():
-    database.add_all_attendees_to_queue(flask_db_session)
+    date_from = request.form['dateTimeFrom']
+    date_to = request.form['dateTimeTo']
+    if date_from == "" or date_from == None:
+        date_from = "2000-01-01T00:00"
+    if date_to == "" or date_to == None:
+        date_to = datetime.now().strftime("%Y-%m-%dT%H:%M")
+    # parse date
+    date_from = time.mktime(time.strptime(date_from, "%Y-%m-%dT%H:%M"))
+    date_to = time.mktime(time.strptime(date_to, "%Y-%m-%dT%H:%M"))
+    database.add_all_attendees_to_queue(flask_db_session, date_from, date_to)
     return ""
 
 
@@ -217,6 +228,7 @@ if __name__ == '__main__':
 
             if event:
                 print("Setting up for {} event...".format(event["name"]["text"]))
+                chosen_event = event
                 event_id = event["id"]
 
                 

@@ -12,7 +12,10 @@
             $.ajax({
                 type: "POST",
                 url: "/start_bulk_print",
-                data: {},
+                data: {
+                    dateTimeFrom: document.getElementById("dateTimeFrom").value,
+                    dateTimeTo: document.getElementById("dateTimeTo").value
+                },
                 success: function (result) {
                     alert("Printing");
                 },
@@ -26,7 +29,13 @@
     }
 
 </script>
-    
+
+<!-- Insert new date time picker field -->
+<label for="dateTimeFrom">Only print lables added in this date range:</label>
+<input type="datetime-local" id="dateTimeFrom" name="dateTimeFrom">
+<label for="dateTime"> - </label>
+<input type="datetime-local" id="dateTimeTo" name="dateTimeTo">
+
 <br>
 <button id="submit_button" class="btn btn-success" onclick="printAllBadges()" value="val_1" name="but1">Print All Badges</button>  
 
