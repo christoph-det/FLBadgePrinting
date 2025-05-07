@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1>{{ event_name }}</h1>
+<h3>Earnings Dashboard</h3>
+
+<div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+    <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px;">
+        <strong>Total Earnings:</strong>
+        <span id="total_earnings">€ {{ (auf_rechnung_sum + online_earnings) / 100}}</span>
+        <br>
+        <small> Geschätzt inkl Gebühren und USt</small>
+        <small>€ {{  ((auf_rechnung_sum + online_earnings) / 100)*1.265 }}</small>
+    </div>
+    <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px;">
+        <strong>Paid Online Earnings:</strong>
+        <span id="online_earnings">€ {{ online_earnings / 100}}</span>
+    </div>
+    <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px;">
+        <strong>Paid Offline Earnings:</strong>
+        <span id="offline_earnings">€ {{ auf_rechnung_sum / 100}}</span>
+    </div>
+    <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px;">
+        <strong>Total Sold Tickets:</strong>
+        <span id="total_sold_tickets">{{ attendees|length }}</span>
+    </div>
+    <div style="background: #f0f0f0; padding: 1rem; border-radius: 8px;">
+        <strong>Total Paid Tickets:</strong>
+        <span id="total_paid_tickets"> {{ total_paid_tickets }}</span>
+    </div>
+</div>
+
+<table>
+    <tr bgcolor="#d3d3d3">
+        <th>Order ID</th>
+        <th>Ticket Name</th>
+        <th>Price Paid</th>
+        <th>Price Calculated</th>
+        <th>Status</th>
+    </tr>
+    <tbody id="ticket_list">
+        {% for attendee in attendees %}
+            <tr>
+                <td>{{ attendee.order_id }}</td>
+                <td>{{ attendee.ticket_name }}</td>
+                <td>{{ attendee.ticket_price / 100 }}</td>
+                <td>{{ attendee.rechnung_ticket_price / 100 }}</td>
+                <td>{{ attendee.status }}</td>
+            </tr>
+{% endfor %}
+    </tbody>
+
+</table>
+{% endblock %}

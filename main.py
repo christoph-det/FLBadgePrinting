@@ -23,7 +23,7 @@ import secrets.config as config
 
 import traceback
 
-
+import re
 
 offline_mode = False
 
@@ -103,7 +103,7 @@ class EventbriteWatcher(threading.Thread):
                 new_attendee = (models.Attendee(attendee_id=int(attendee["id"]), order_id=int(attendee["order_id"]), event_id=int(event_id)
                                                 , first_name=attendee["profile"]["first_name"], surname=attendee["profile"]["last_name"], event_name=str(chosen_event["name"]["text"]),
                                                 company = attendee["profile"]["company"], position = attendee["profile"]["job_title"],
-                                                status=attendee["status"], ticket_name=attendee["ticket_class_name"], order_date=order_date))
+                                                status=attendee["status"], ticket_name=attendee["ticket_class_name"], order_date=order_date, ticket_price=attendee["costs"]["base_price"]["value"],))
                 attendees.append(new_attendee)
             current_attendees = database.get_current_attendees(self.db_session, event_id)
             database.compare_attendees(self.db_session, current_attendees, attendees)
@@ -128,6 +128,23 @@ def get_day_password():
     return None
 
 
+def extract_ticket_price_from_name(ticket_name):
+    """
+    Extracts the first euro amount from a ticket_name string like
+    "LIVE Ticket um 180,00€ zzgl. Ust. auf Rechnung" and returns it as float.
+    Returns 0.0 if not found.
+    """
+    match = re.search(r'(\d{1,3}(?:\.\d{3})*,\d{2})\s*€', ticket_name)
+    if match:
+        # Replace . with nothing (thousand separator), , with . (decimal)
+        value = match.group(1).replace('.', '').replace(',', '.')
+        try:
+            return int(float(value) * 100)
+        except ValueError:
+            return 0
+    return 0
+
+
 @app.route("/")
 def home():
     attendees = database.get_current_attendees(flask_db_session, event_id)
@@ -145,6 +162,24 @@ def manual_printing():
 @app.route("/bulk_printing")
 def bulk_printing():
     return render_template("bulk_printing.html")
+
+@app.route("/dashboard")
+def dashboard():
+    attendees = database.get_current_attendees(flask_db_session, event_id)
+    online_earnings = sum([attendee.ticket_price for attendee in attendees if attendee.status == "Attending"])
+
+    # add a column to the attendees list with the ticket_name euro value
+    for attendee in attendees:
+        attendee.rechnung_ticket_price = extract_ticket_price_from_name(attendee.ticket_name)
+
+    # Sum up extracted ticket_name euro values
+    auf_rechnung_sum = sum([attendee.rechnung_ticket_price for attendee in attendees if attendee.status == "Attending"])
+
+    total_paid_tickets = sum([1 for attendee in attendees if attendee.status == "Attending" and (attendee.ticket_price > 0 or attendee.rechnung_ticket_price > 0)])
+    
+
+    return render_template("dashboard.html", attendees=attendees, online_earnings=online_earnings, auf_rechnung_sum=auf_rechnung_sum, total_paid_tickets=total_paid_tickets, event_name=event["name"]["text"])
+
 
 @app.route("/start_manual_print", methods=['GET', 'POST'])
 def start_manual_printing():

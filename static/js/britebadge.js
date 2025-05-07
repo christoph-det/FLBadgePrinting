@@ -48,6 +48,27 @@ function updatePrintQueueTable(printQueueData){
 
 }
 
+function updateDahboard(attenddeeData){
+    // Set summary values
+    $('#total_earnings').text("€" + parseFloat(attenddeeData.total_earnings).toFixed(2));
+    $('#total_sold_tickets').text(attenddeeData.total_sold_tickets);
+    $('#total_paid_tickets').text(attenddeeData.total_paid_tickets);
+
+    // Update ticket list table
+    var ticketRows = "";
+    if (attenddeeData.tickets && Array.isArray(attenddeeData.tickets)) {
+        attenddeeData.tickets.forEach(function(ticket) {
+            ticketRows += "<tr>" +
+                "<td>" + ticket.order_id + "</td>" +
+                "<td>" + ticket.ticket_name + "</td>" +
+                "<td>€" + parseFloat(ticket.price_paid).toFixed(2) + "</td>" +
+                "<td>€" + parseFloat(ticket.price_calculated).toFixed(2) + "</td>" +
+                "<td>" + ticket.status + "</td>" +
+                "</tr>";
+        });
+    }
+    $('#ticket_list').html(ticketRows);
+}
 
 function printBadge(attendee_id) {
     $.ajax({

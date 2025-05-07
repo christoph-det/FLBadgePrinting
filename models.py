@@ -41,6 +41,7 @@ class Attendee(Base):
     status = Column(String(20))
     badges_printed = relationship("PrintQueue", foreign_keys=PrintQueue.attendee_id)
     order_date = Column(BigInteger, nullable=False)
+    ticket_price = Column(Integer, nullable=False)
 
 
 Base.metadata.create_all(engine)
