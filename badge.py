@@ -65,9 +65,27 @@ def create_label_image(first_name, surname, company, position, eventname):
     # add separator
     d.line((40, 300, 1010, 300), fill="black", width=5)
     # company
+
+    # Insert line break in company if longer than 50 chars
+
+    space_modifier_break_company = 0
+
+    if len(company) > 48:
+        company = company.rstrip()
+        last_space = company.rfind(' ', 0)
+        if last_space != -1:
+            company = company[:last_space] + '\n' + company[last_space+1:]
+            space_modifier_break_company = 50
+
+    if len(position) > 48:
+        position = position.rstrip()
+        last_space = position.rfind(' ', 0)
+        if last_space != -1:
+            position = position[:last_space] + '\n' + position[last_space+1:]
+
     d.text((40, 370), company, fill="black", font=normal_font)
     # position
-    d.text((40, 440), position, fill="black", font=normal_font)
+    d.text((40, 440 + space_modifier_break_company), position, fill="black", font=normal_font)
     d.text((40, 610), eventname, fill="black", font=small_font)
 
     # add logo
