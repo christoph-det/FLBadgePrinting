@@ -176,9 +176,12 @@ def dashboard():
     auf_rechnung_sum = sum([attendee.rechnung_ticket_price for attendee in attendees if (attendee.status == "Attending" or attendee.status == "Checked In")])
 
     total_paid_tickets = sum([1 for attendee in attendees if (attendee.status == "Attending" or attendee.status == "Checked In") and (attendee.ticket_price > 0 or attendee.rechnung_ticket_price > 0)])
+
+    # total attendees but remove duplicates based on attenddee name and surname
+    total_unique_attendees = len(set([(attendee.first_name, attendee.surname) for attendee in attendees if (attendee.status == "Attending" or attendee.status == "Checked In")]))
     
 
-    return render_template("dashboard.html", attendees=attendees, online_earnings=online_earnings, auf_rechnung_sum=auf_rechnung_sum, total_paid_tickets=total_paid_tickets, event_name=event["name"]["text"])
+    return render_template("dashboard.html", attendees=attendees, online_earnings=online_earnings, auf_rechnung_sum=auf_rechnung_sum, total_paid_tickets=total_paid_tickets, total_unique_attendees=total_unique_attendees, event_name=event["name"]["text"])
 
 
 @app.route("/start_manual_print", methods=['GET', 'POST'])
