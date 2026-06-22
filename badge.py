@@ -32,6 +32,75 @@ PRINTER_NAME = 'QL-810W'
 LABEL_FORMAT = '62'
 #PRINTABLE_SIZE = (1050, 696)
 PRINTABLE_SIZE = (1050, 696)
+LEFT_MARGIN = 40
+RIGHT_MARGIN = 40
+TEXT_WIDTH = PRINTABLE_SIZE[0] - LEFT_MARGIN - RIGHT_MARGIN
+
+
+def get_text_size(draw, text, font):
+    bbox = draw.multiline_textbbox((0, 0), text, font=font, spacing=4)
+    return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+
+def fit_font(draw, text, font_face, max_size, min_size, max_width, max_height=None):
+    for size in range(max_size, min_size - 1, -1):
+        font = ImageFont.truetype(font_face, size)
+        width, height = get_text_size(draw, text, font)
+        if width <= max_width and (max_height is None or height <= max_height):
+            return font
+    return ImageFont.truetype(font_face, min_size)
+
+
+def wrap_text_to_width(draw, text, font, max_width, max_lines=2):
+    words = []
+    for word in text.split():
+        if get_text_size(draw, word, font)[0] <= max_width:
+            words.append(word)
+            continue
+
+        chunk = ""
+        for character in word:
+            candidate = chunk + character
+            if chunk and get_text_size(draw, candidate, font)[0] > max_width:
+                words.append(chunk)
+                chunk = character
+            else:
+                chunk = candidate
+        if chunk:
+            words.append(chunk)
+
+    if not words:
+        return ""
+
+    lines = []
+    current_line = words[0]
+
+    for word in words[1:]:
+        candidate = "{} {}".format(current_line, word)
+        if get_text_size(draw, candidate, font)[0] <= max_width:
+            current_line = candidate
+        else:
+            lines.append(current_line)
+            current_line = word
+
+    lines.append(current_line)
+
+    if len(lines) <= max_lines:
+        return "\n".join(lines)
+
+    return "\n".join(lines[:max_lines - 1] + [" ".join(lines[max_lines - 1:])])
+
+
+def fit_wrapped_text(draw, text, font_face, max_size, min_size, max_width, max_height, max_lines=2):
+    for size in range(max_size, min_size - 1, -1):
+        font = ImageFont.truetype(font_face, size)
+        wrapped_text = wrap_text_to_width(draw, text, font, max_width, max_lines)
+        width, height = get_text_size(draw, wrapped_text, font)
+        if width <= max_width and height <= max_height:
+            return wrapped_text, font
+
+    font = ImageFont.truetype(font_face, min_size)
+    return wrap_text_to_width(draw, text, font, max_width, max_lines), font
 
 
 def generate_qr_code(URL):
@@ -51,42 +120,28 @@ def create_label_image(first_name, surname, company, position, eventname):
     future_law_logo = Image.open('future_law_logo.jpg')
     font_face = "arial.ttf"
     
-    biggest_font = ImageFont.truetype(font_face, 110)
-    big_font = ImageFont.truetype(font_face, 75)
-    normal_font = ImageFont.truetype(font_face, 45)
+    biggest_font = fit_font(ImageDraw.Draw(Image.new('L', PRINTABLE_SIZE)), first_name, font_face, 110, 70, TEXT_WIDTH)
     small_font = ImageFont.truetype(font_face, 38)
     img = Image.new('L', PRINTABLE_SIZE, color='white')
 
     d = ImageDraw.Draw(img)
+    surname, surname_font = fit_wrapped_text(d, surname, font_face, 95, 48, TEXT_WIDTH, 115, max_lines=2)
+    company, company_font = fit_wrapped_text(d, company, font_face, 68, 44, TEXT_WIDTH, 120, max_lines=2)
+    position, position_font = fit_wrapped_text(d, position, font_face, 45, 34, TEXT_WIDTH, 100, max_lines=2)
+    company_height = get_text_size(d, company, company_font)[1]
+    position_y = 370 + company_height + 28
 
     # draw information on badge
-    d.text((40, 70), first_name, fill="black", font=biggest_font)
-    d.text((40, 190), surname, fill="black", font=big_font)
+    d.text((LEFT_MARGIN, 70), first_name, fill="black", font=biggest_font)
+    d.text((LEFT_MARGIN, 170), surname, fill="black", font=surname_font, spacing=4)
     # add separator
-    d.line((40, 300, 1010, 300), fill="black", width=5)
+    d.line((LEFT_MARGIN, 300, PRINTABLE_SIZE[0] - RIGHT_MARGIN, 300), fill="black", width=5)
     # company
 
-    # Insert line break in company if longer than 50 chars
-
-    space_modifier_break_company = 0
-
-    if len(company) > 48:
-        company = company.rstrip()
-        last_space = company.rfind(' ', 0)
-        if last_space != -1:
-            company = company[:last_space] + '\n' + company[last_space+1:]
-            space_modifier_break_company = 50
-
-    if len(position) > 48:
-        position = position.rstrip()
-        last_space = position.rfind(' ', 0)
-        if last_space != -1:
-            position = position[:last_space] + '\n' + position[last_space+1:]
-
-    d.text((40, 370), company, fill="black", font=normal_font)
+    d.text((LEFT_MARGIN, 370), company, fill="black", font=company_font, spacing=4)
     # position
-    d.text((40, 440 + space_modifier_break_company), position, fill="black", font=normal_font)
-    d.text((40, 610), eventname, fill="black", font=small_font)
+    d.text((LEFT_MARGIN, position_y), position, fill="black", font=position_font, spacing=4)
+    d.text((LEFT_MARGIN, 610), eventname, fill="black", font=small_font)
 
     # add logo
 

@@ -1,0 +1,21 @@
+[project]
+name = "fl-badge-printing"
+version = "0.1.0"
+description = "Badge printing app for Future Law events using Eventbrite and Brother QL printers."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "brother-ql",
+    "eventbrite",
+    "flask",
+    "pillow",
+    "pyusb",
+    "pytz",
+    "qrcode",
+    "requests",
+    "sqlalchemy",
+    "wtforms",
+]
+
+[tool.uv]
+package = false

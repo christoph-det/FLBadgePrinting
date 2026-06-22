@@ -8,11 +8,31 @@ Like eventbadge, BriteBadge is designed to be used with a Brother QL-570 label p
 ![Example badge](example_badge.jpg)
 
 ### Setting up
-1. Copy the `secrets/config_example.py` file to `secrets/config.py`.   
-2. Edit the `secrets/config.py` file, following the instructions in the comments. You will need your Eventbrite API key as a minimum.   
-3. Install all the requirements of the project using `pip3 install -r requirements.txt`.   
-4. Customise your label design (see below).   
-5. To run the application, run with `main.py` file with Python 3.   
+1. Install [uv](https://docs.astral.sh/uv/) if it is not already installed.
+2. Copy the `secrets/config_example.py` file to `secrets/config.py`.
+3. Edit the `secrets/config.py` file, following the instructions in the comments. You will need your Eventbrite API key as a minimum.
+4. Install the project dependencies:
+
+   ```sh
+   uv sync
+   ```
+
+5. Customise your label design (see below).
+6. Run the application:
+
+   ```sh
+   uv run python main.py
+   ```
+
+The app starts a Flask server on port 80, so on some systems you may need elevated permissions or to change the port in `main.py`.
+
+### Legacy pip setup
+If you are not using uv, the dependencies are still listed in `requirements.txt`:
+
+```sh
+python3 -m pip install -r requirements.txt
+python3 main.py
+```
 
 ### Mac:
 USB Driver: brew install libusb
@@ -38,4 +58,3 @@ This is where the badge itself is built up, using PIL statements. These can be t
 ### Printing
 
 For setting up the printer look at: https://pypi.org/project/brother-ql/
-
