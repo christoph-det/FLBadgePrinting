@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, JSON, BigInteger
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 import os
 
@@ -24,7 +24,7 @@ class PrintQueue(Base):
     attendee_id = Column(ForeignKey('attendees.attendee_id'), nullable=False)
     printed = Column(Boolean, nullable=False)
     manual_data = Column(JSON, nullable=True)
-    attendee = relationship("Attendee")
+    attendee = relationship("Attendee", back_populates="badges_printed")
 
 
 class Attendee(Base):
@@ -39,7 +39,7 @@ class Attendee(Base):
     company = Column(String(150), nullable=True)
     position = Column(String(150), nullable=True)
     status = Column(String(20))
-    badges_printed = relationship("PrintQueue", foreign_keys=PrintQueue.attendee_id)
+    badges_printed = relationship("PrintQueue", back_populates="attendee")
     order_date = Column(BigInteger, nullable=False)
     ticket_price = Column(Integer, nullable=False)
 

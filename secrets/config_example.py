@@ -7,6 +7,10 @@ eventbrite_event_id = ""
 # Your Eventbrite API key - https://www.eventbrite.at/account-settings/apps
 eventbrite_key = ""
 
+# Password for the web interface when opened from another device in the network.
+# On the PC running the app (localhost) no password is needed. Leave blank to disable.
+web_password = ""
+
 # How frequent to poll Eventbrite. Be careful you don't hit the rate limit! In seconds.
 delay_between_eventbrite_queries = 10
 
