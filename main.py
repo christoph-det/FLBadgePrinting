@@ -45,14 +45,17 @@ flask_db_session = database.setup_db_connection()
 
 web_password = getattr(config, "web_password", "")
 if not web_password:
-    print(terminal_colors.YELLOW + "Warning: No web_password set in secrets/config.py, web interface is open for everyone in the network" + terminal_colors.RESET)
+    print(terminal_colors.YELLOW + "Warning: No web_password set in secrets/config.py, web interface is only reachable from localhost" + terminal_colors.RESET)
 
 
 @app.before_request
 def require_password():
     # the PC running the app (localhost) never needs a password
-    if not web_password or request.remote_addr in ("127.0.0.1", "::1"):
+    if request.remote_addr in ("127.0.0.1", "::1"):
         return None
+    # without a configured password, other devices are blocked entirely
+    if not web_password:
+        return Response("Web interface is only available on this PC. Set web_password in secrets/config.py to allow access from the network.", 403)
     auth = request.authorization
     if auth and auth.password and hmac.compare_digest(auth.password, web_password):
         return None
