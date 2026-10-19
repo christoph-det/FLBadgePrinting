@@ -44,7 +44,6 @@ FONT_DISPLAY_SEMIBOLD = os.path.join(FONT_DIR, "InterDisplay-SemiBold.ttf")
 FONT_DISPLAY_BOLD = os.path.join(FONT_DIR, "InterDisplay-Bold.ttf")
 FONT_REGULAR = os.path.join(FONT_DIR, "Inter-Regular.ttf")
 FONT_MEDIUM = os.path.join(FONT_DIR, "Inter-Medium.ttf")
-LOGO_PATH = os.path.join(BASE_DIR, "future_law_logo.jpg")
 
 
 def get_text_size(draw, text, font):
@@ -171,25 +170,21 @@ def render_label_image(first_name, surname, company, position, eventname):
     d = ImageDraw.Draw(img)
     center_x = PRINTABLE_SIZE[0] // 2
 
-    # header: logo
-    logo = Image.open(LOGO_PATH).convert('L')
-    logo_width = 230
-    logo = logo.resize((logo_width, round(logo.height * logo_width / logo.width)), Image.LANCZOS)
-    header_top = 46
-    img.paste(logo, (center_x - logo_width // 2, header_top))
-    header_bottom = header_top + logo.height
+    # no logo: the label is stuck onto an A6 card that already carries it
+    top_margin = 24
+    bottom_margin = 22
 
     # footer: event name, tracked uppercase between two short rules
     footer_font = ImageFont.truetype(FONT_MEDIUM, 25)
     footer_text = eventname.upper()
-    footer_y = PRINTABLE_SIZE[1] - 46 - line_height(footer_font)
+    footer_y = PRINTABLE_SIZE[1] - bottom_margin - line_height(footer_font)
     footer_width = 0
     while footer_text:
         footer_width = sum(d.textlength(c, font=footer_font) for c in footer_text) + 5 * (len(footer_text) - 1)
         if footer_width <= TEXT_WIDTH - 200:
             break
         footer_font = ImageFont.truetype(FONT_MEDIUM, footer_font.size - 1)
-        footer_y = PRINTABLE_SIZE[1] - 46 - line_height(footer_font)
+        footer_y = PRINTABLE_SIZE[1] - bottom_margin - line_height(footer_font)
     if footer_text:
         draw_tracked_text(d, footer_y, footer_text, footer_font, 5)
         rule_y = footer_y + line_height(footer_font) // 2
@@ -198,9 +193,9 @@ def render_label_image(first_name, surname, company, position, eventname):
         d.line((center_x + footer_width / 2 + gap, rule_y, center_x + footer_width / 2 + gap + 60, rule_y), fill="black", width=2)
 
     # content: first name, surname (dominant), divider, company, position
-    content_top = header_bottom
-    content_bottom = footer_y if footer_text else PRINTABLE_SIZE[1] - 46
-    min_padding = 28
+    content_top = top_margin
+    content_bottom = footer_y if footer_text else PRINTABLE_SIZE[1] - bottom_margin
+    min_padding = 20
     name_gap = 4
     divider_height = 4
 
@@ -210,10 +205,10 @@ def render_label_image(first_name, surname, company, position, eventname):
 
     # shrink everything step by step until the content fits between header and footer
     for scale in [1.0, 0.94, 0.88, 0.82, 0.76, 0.7]:
-        first_name_text, first_name_font = fit_wrapped_text(d, first_name, FONT_DISPLAY_REGULAR, round(58 * scale), 34, TEXT_WIDTH, 70, max_lines=1)
-        surname_text, surname_font = fit_wrapped_text(d, surname, FONT_DISPLAY_BOLD, round(88 * scale), 44, TEXT_WIDTH, 190, max_lines=2)
-        company_text, company_font = fit_wrapped_text(d, company, FONT_DISPLAY_SEMIBOLD, round(54 * scale), 32, TEXT_WIDTH, 140, max_lines=2)
-        position_text, position_font = fit_wrapped_text(d, position, FONT_REGULAR, round(40 * scale), 28, TEXT_WIDTH, 100, max_lines=2)
+        first_name_text, first_name_font = fit_wrapped_text(d, first_name, FONT_DISPLAY_REGULAR, round(64 * scale), 34, TEXT_WIDTH, 80, max_lines=1)
+        surname_text, surname_font = fit_wrapped_text(d, surname, FONT_DISPLAY_BOLD, round(108 * scale), 44, TEXT_WIDTH, 270, max_lines=2)
+        company_text, company_font = fit_wrapped_text(d, company, FONT_DISPLAY_SEMIBOLD, round(68 * scale), 32, TEXT_WIDTH, 180, max_lines=2)
+        position_text, position_font = fit_wrapped_text(d, position, FONT_REGULAR, round(46 * scale), 28, TEXT_WIDTH, 120, max_lines=2)
 
         divider_gap = round(34 * scale)
         info_gap = round(10 * scale)
