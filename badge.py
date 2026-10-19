@@ -9,6 +9,7 @@ from brother_ql.backends.helpers import send
 
 import usb.core
 
+import os
 import unicodedata
 
 
@@ -32,9 +33,18 @@ PRINTER_NAME = 'QL-810W'
 LABEL_FORMAT = '62'
 #PRINTABLE_SIZE = (1050, 696)
 PRINTABLE_SIZE = (1050, 696)
-LEFT_MARGIN = 40
-RIGHT_MARGIN = 40
+LEFT_MARGIN = 60
+RIGHT_MARGIN = 60
 TEXT_WIDTH = PRINTABLE_SIZE[0] - LEFT_MARGIN - RIGHT_MARGIN
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FONT_DIR = os.path.join(BASE_DIR, "fonts")
+FONT_DISPLAY_REGULAR = os.path.join(FONT_DIR, "InterDisplay-Regular.ttf")
+FONT_DISPLAY_SEMIBOLD = os.path.join(FONT_DIR, "InterDisplay-SemiBold.ttf")
+FONT_DISPLAY_BOLD = os.path.join(FONT_DIR, "InterDisplay-Bold.ttf")
+FONT_REGULAR = os.path.join(FONT_DIR, "Inter-Regular.ttf")
+FONT_MEDIUM = os.path.join(FONT_DIR, "Inter-Medium.ttf")
+LOGO_PATH = os.path.join(BASE_DIR, "future_law_logo.jpg")
 
 
 def get_text_size(draw, text, font):
@@ -85,10 +95,23 @@ def wrap_text_to_width(draw, text, font, max_width, max_lines=2):
 
     lines.append(current_line)
 
+    if len(lines) == 2:
+        lines = balance_two_lines(draw, words, font)
+
     if len(lines) <= max_lines:
         return "\n".join(lines)
 
     return "\n".join(lines[:max_lines - 1] + [" ".join(lines[max_lines - 1:])])
+
+
+def balance_two_lines(draw, words, font):
+    best_lines, best_width = None, None
+    for split in range(1, len(words)):
+        lines = [" ".join(words[:split]), " ".join(words[split:])]
+        width = max(get_text_size(draw, line, font)[0] for line in lines)
+        if best_width is None or width < best_width:
+            best_lines, best_width = lines, width
+    return best_lines
 
 
 def fit_wrapped_text(draw, text, font_face, max_size, min_size, max_width, max_height, max_lines=2):
@@ -108,52 +131,125 @@ def generate_qr_code(URL):
     return img
 
 
-def create_label_image(first_name, surname, company, position, eventname):
-   
-    first_name = unicodedata.normalize('NFC', first_name)
-    surname = unicodedata.normalize('NFC', surname)
-    company = unicodedata.normalize('NFC', company)
-    position = unicodedata.normalize('NFC', position)
-    eventname = unicodedata.normalize('NFC', eventname)
+def line_height(font):
+    ascent, descent = font.getmetrics()
+    return ascent + descent
 
 
-    future_law_logo = Image.open('future_law_logo.jpg')
-    font_face = "arial.ttf"
-    
-    biggest_font = fit_font(ImageDraw.Draw(Image.new('L', PRINTABLE_SIZE)), first_name, font_face, 110, 70, TEXT_WIDTH)
-    small_font = ImageFont.truetype(font_face, 38)
+def text_block_height(text, font, line_spacing):
+    if not text:
+        return 0
+    lines = text.split("\n")
+    return len(lines) * line_height(font) + (len(lines) - 1) * line_spacing
+
+
+def draw_centered_block(draw, y, text, font, line_spacing):
+    for line in text.split("\n"):
+        draw.text((PRINTABLE_SIZE[0] // 2, y), line, fill="black", font=font, anchor="ma")
+        y += line_height(font) + line_spacing
+    return y - line_spacing
+
+
+def draw_tracked_text(draw, y, text, font, tracking):
+    widths = [draw.textlength(character, font=font) for character in text]
+    total_width = sum(widths) + tracking * (len(text) - 1)
+    x = (PRINTABLE_SIZE[0] - total_width) / 2
+    for character, width in zip(text, widths):
+        draw.text((x, y), character, fill="black", font=font)
+        x += width + tracking
+    return total_width
+
+
+def render_label_image(first_name, surname, company, position, eventname):
+    first_name = unicodedata.normalize('NFC', first_name or "").strip()
+    surname = unicodedata.normalize('NFC', surname or "").strip()
+    company = unicodedata.normalize('NFC', company or "").strip()
+    position = unicodedata.normalize('NFC', position or "").strip()
+    eventname = unicodedata.normalize('NFC', eventname or "").strip()
+
     img = Image.new('L', PRINTABLE_SIZE, color='white')
-
     d = ImageDraw.Draw(img)
-    surname, surname_font = fit_wrapped_text(d, surname, font_face, 95, 48, TEXT_WIDTH, 115, max_lines=2)
-    company, company_font = fit_wrapped_text(d, company, font_face, 68, 44, TEXT_WIDTH, 120, max_lines=2)
-    position, position_font = fit_wrapped_text(d, position, font_face, 45, 34, TEXT_WIDTH, 100, max_lines=2)
-    company_height = get_text_size(d, company, company_font)[1]
-    position_y = 370 + company_height + 28
+    center_x = PRINTABLE_SIZE[0] // 2
 
-    # draw information on badge
-    d.text((LEFT_MARGIN, 70), first_name, fill="black", font=biggest_font)
-    d.text((LEFT_MARGIN, 170), surname, fill="black", font=surname_font, spacing=4)
-    # add separator
-    d.line((LEFT_MARGIN, 300, PRINTABLE_SIZE[0] - RIGHT_MARGIN, 300), fill="black", width=5)
-    # company
+    # header: logo
+    logo = Image.open(LOGO_PATH).convert('L')
+    logo_width = 230
+    logo = logo.resize((logo_width, round(logo.height * logo_width / logo.width)), Image.LANCZOS)
+    header_top = 46
+    img.paste(logo, (center_x - logo_width // 2, header_top))
+    header_bottom = header_top + logo.height
 
-    d.text((LEFT_MARGIN, 370), company, fill="black", font=company_font, spacing=4)
-    # position
-    d.text((LEFT_MARGIN, position_y), position, fill="black", font=position_font, spacing=4)
-    d.text((LEFT_MARGIN, 610), eventname, fill="black", font=small_font)
+    # footer: event name, tracked uppercase between two short rules
+    footer_font = ImageFont.truetype(FONT_MEDIUM, 25)
+    footer_text = eventname.upper()
+    footer_y = PRINTABLE_SIZE[1] - 46 - line_height(footer_font)
+    footer_width = 0
+    while footer_text:
+        footer_width = sum(d.textlength(c, font=footer_font) for c in footer_text) + 5 * (len(footer_text) - 1)
+        if footer_width <= TEXT_WIDTH - 200:
+            break
+        footer_font = ImageFont.truetype(FONT_MEDIUM, footer_font.size - 1)
+        footer_y = PRINTABLE_SIZE[1] - 46 - line_height(footer_font)
+    if footer_text:
+        draw_tracked_text(d, footer_y, footer_text, footer_font, 5)
+        rule_y = footer_y + line_height(footer_font) // 2
+        gap = 24
+        d.line((center_x - footer_width / 2 - gap - 60, rule_y, center_x - footer_width / 2 - gap, rule_y), fill="black", width=2)
+        d.line((center_x + footer_width / 2 + gap, rule_y, center_x + footer_width / 2 + gap + 60, rule_y), fill="black", width=2)
 
-    # add logo
+    # content: first name, surname (dominant), divider, company, position
+    content_top = header_bottom
+    content_bottom = footer_y if footer_text else PRINTABLE_SIZE[1] - 46
+    min_padding = 28
+    name_gap = 4
+    divider_height = 4
 
-    # if "legal tech" in eventname.lower():
-    #    img.paste(future_law_logo.resize((300, 53), Image.LANCZOS), (720, 600))
-    
-    # QR Code
-    # qr_code = generate_qr_code('https:future-law.eu')
-    # img.paste(qr_code.resize((270, 270), Image.ANTIALIAS), (720, 0))
+    def block_height(block):
+        kind, text, font, _ = block
+        return divider_height if kind == "divider" else text_block_height(text, font, 2)
 
-    img = img.rotate(90, expand=True)
+    # shrink everything step by step until the content fits between header and footer
+    for scale in [1.0, 0.94, 0.88, 0.82, 0.76, 0.7]:
+        first_name_text, first_name_font = fit_wrapped_text(d, first_name, FONT_DISPLAY_REGULAR, round(58 * scale), 34, TEXT_WIDTH, 70, max_lines=1)
+        surname_text, surname_font = fit_wrapped_text(d, surname, FONT_DISPLAY_BOLD, round(88 * scale), 44, TEXT_WIDTH, 190, max_lines=2)
+        company_text, company_font = fit_wrapped_text(d, company, FONT_DISPLAY_SEMIBOLD, round(54 * scale), 32, TEXT_WIDTH, 140, max_lines=2)
+        position_text, position_font = fit_wrapped_text(d, position, FONT_REGULAR, round(40 * scale), 28, TEXT_WIDTH, 100, max_lines=2)
 
+        divider_gap = round(34 * scale)
+        info_gap = round(10 * scale)
+        blocks = [
+            ("text", first_name_text, first_name_font, 0),
+            ("text", surname_text, surname_font, name_gap),
+        ]
+        if company_text or position_text:
+            blocks.append(("divider", None, None, divider_gap))
+            blocks.append(("text", company_text, company_font, divider_gap))
+            blocks.append(("text", position_text, position_font, info_gap if company_text else divider_gap))
+
+        blocks = [block for block in blocks if block[0] == "divider" or block[1]]
+        content_height = sum(block_height(block) for block in blocks) + sum(block[3] for block in blocks[1:])
+        if content_height <= content_bottom - content_top - 2 * min_padding:
+            break
+
+    y = content_top + (content_bottom - content_top - content_height) // 2
+
+    for index, block in enumerate(blocks):
+        kind, text, font, gap = block
+        if index > 0:
+            y += gap
+        if kind == "divider":
+            d.line((center_x - 45, y + divider_height // 2, center_x + 45, y + divider_height // 2), fill="black", width=divider_height)
+            y += divider_height
+        else:
+            y = draw_centered_block(d, y, text, font, 2)
+
+    # pure black and white for crisp thermal printing
+    img = img.point(lambda value: 0 if value < 160 else 255, mode='1')
+    return img.rotate(90, expand=True)
+
+
+def create_label_image(first_name, surname, company, position, eventname):
+    img = render_label_image(first_name, surname, company, position, eventname)
     img.save('generated_badge.png')
     sleep(0.1)
     send_to_printer('generated_badge.png')
@@ -161,5 +257,5 @@ def create_label_image(first_name, surname, company, position, eventname):
 
 def send_to_printer(path):
     printer = BrotherQLRaster(PRINTER_NAME)
-    print_data = brother_ql.brother_ql_create.convert(printer, [path], LABEL_FORMAT, dither=True, hq=False)
+    print_data = brother_ql.brother_ql_create.convert(printer, [path], LABEL_FORMAT, dither=False, hq=True)
     send(print_data, PRINTER_IDENTIFIER)
