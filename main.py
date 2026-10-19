@@ -24,6 +24,12 @@ import secrets.config as config
 import traceback
 
 import re
+import csv
+import hmac
+import datetime as dt
+
+import pytz
+from flask import Response
 
 offline_mode = False
 
@@ -36,6 +42,21 @@ except Exception as e:
     offline_mode = True
 
 flask_db_session = database.setup_db_connection()
+
+web_password = getattr(config, "web_password", "")
+if not web_password:
+    print(terminal_colors.YELLOW + "Warning: No web_password set in secrets/config.py, web interface is open for everyone in the network" + terminal_colors.RESET)
+
+
+@app.before_request
+def require_password():
+    # the PC running the app (localhost) never needs a password
+    if not web_password or request.remote_addr in ("127.0.0.1", "::1"):
+        return None
+    auth = request.authorization
+    if auth and auth.password and hmac.compare_digest(auth.password, web_password):
+        return None
+    return Response("Password required", 401, {"WWW-Authenticate": 'Basic realm="Badge Printing"'})
 
 
 class BackgroundPrinter(threading.Thread):
@@ -88,6 +109,8 @@ class EventbriteWatcher(threading.Thread):
                 print(str(e))
                 traceback.print_exc()
                 print("---------------")
+                # wait before retrying, otherwise a network outage causes a tight loop against Eventbrite
+                time.sleep(int(delay_between_eventbrite_queries))
 
 
     def update(self):
@@ -96,6 +119,7 @@ class EventbriteWatcher(threading.Thread):
 
         if not offline_mode:
             attendees = []
+            check_started_at = dt.datetime.now(pytz.utc)
             raw_attendees = eventbrite_interactions.get_eventbrite_attendees_for_event(event_id, changed_since=database.get_last_check_time(self.db_session))["attendees"]
             print ("{} new attendees found".format(len(raw_attendees)))
             for attendee in raw_attendees:
@@ -107,6 +131,7 @@ class EventbriteWatcher(threading.Thread):
                 attendees.append(new_attendee)
             current_attendees = database.get_current_attendees(self.db_session, event_id)
             database.compare_attendees(self.db_session, current_attendees, attendees)
+            database.set_last_check_time(self.db_session, check_started_at)
             print("Checking for updates from Eventbrite took {} seconds.".format(time.time() - start_update))
         else:
             print("Offline Mode, no updates from Eventbrite")
@@ -195,8 +220,8 @@ def start_manual_printing():
     database.manual_add_to_print_queue(flask_db_session, fname, lname, position, company, conference)
 
     # save attenndee data to csv file for further reference
-    with open('manual_attendees.csv', 'a') as f:
-        f.write("{},{},{},{},{},{},{}\n".format(fname, lname, position, company, conference, internal_note, time.strftime("%Y-%m-%d %H:%M:%S")))
+    with open('manual_attendees.csv', 'a', newline='', encoding='utf-8') as f:
+        csv.writer(f).writerow([fname, lname, position, company, conference, internal_note, time.strftime("%Y-%m-%d %H:%M:%S")])
 
     return ""
 
@@ -249,43 +274,43 @@ if __name__ == '__main__':
 
         if offline_mode:
             print(terminal_colors.YELLOW + "Starting App in offline mode" + terminal_colors.RESET)
-            background_printer = BackgroundPrinter(day_password=get_day_password())
-            
-
             event_id = eventbrite_event_id
             event = {
                 "name": {
                     "text": "Offline Event"
                 }
             }
-        else:
+            break
+
+        try:
             if eventbrite_event_id: # Manual eventbrite id
                 event = eventbrite_interactions.get_eventbrite_event_by_id(eventbrite_event_id)
             else:
                 event = eventbrite_interactions.get_most_recent_eventbrite_event_from_nijis()
+        except Exception as e:
+            print("Error - Loading the Eventbrite event failed: {}".format(e))
+            event = None
 
-            if event:
-                print("Setting up for {} event...".format(event["name"]["text"]))
-                chosen_event = event
-                event_id = event["id"]
+        if event:
+            print("Setting up for {} event...".format(event["name"]["text"]))
+            chosen_event = event
+            event_id = event["id"]
 
-                
-                background_printer = BackgroundPrinter(day_password=get_day_password())
-                
+            eventbrite_watcher = EventbriteWatcher(event)
+            eventbrite_watcher.daemon = True
+            eventbrite_watcher.start()
+            break
 
-                eventbrite_watcher = EventbriteWatcher(event)
-                eventbrite_watcher.daemon = True
-                eventbrite_watcher.start()
+        if attempts >= 60:
+            print("Error - Unable to find a valid Eventbrite event (check selected event on NIJIS). 60 attempts have been made, giving up now...")
+            sys.exit(1)
 
-            elif attempts > 60:
-                print("Error - Unable to find a valid Eventbrite event (check selected event on NIJIS). 60 attempts have been made, giving up now...")
+        print("Error - Unable to find a valid Eventbrite event (check selected event on NIJIS). Will try again in 60 seconds")
+        time.sleep(60)
 
-            else:
-                print("Error - Unable to find a valid Eventbrite event (check selected event on NIJIS). Will try again in 60 seconds")
-                time.sleep(60)
-        background_printer.daemon = True
-        background_printer.start()      
-        display.display_text("Britebadge")
-        display.display_text("Starting...", 0, 1)
-        app.run(host='0.0.0.0', port=80)
-
+    background_printer = BackgroundPrinter(day_password=get_day_password())
+    background_printer.daemon = True
+    background_printer.start()
+    display.display_text("Britebadge")
+    display.display_text("Starting...", 0, 1)
+    app.run(host='0.0.0.0', port=80)

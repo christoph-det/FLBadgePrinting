@@ -17,15 +17,18 @@ import os
 import unicodedata
 
 
-printer_found = usb.core.find(idVendor=0x4F9)
+def find_printer_identifier():
+    # looked up again before every print, so the printer can be (re)connected while the app is running
+    printer_found = usb.core.find(idVendor=0x4F9)
+    if not printer_found:
+        return None
+    return f"usb://{hex(printer_found.idVendor)}:{hex(printer_found.idProduct)}"
 
-if printer_found:
-    printer_vendor = hex(printer_found.idVendor)
-    printer_product = hex(printer_found.idProduct)
-    PRINTER_IDENTIFIER = f"usb://{printer_vendor}:{printer_product}"
-    print(PRINTER_IDENTIFIER)
+
+if find_printer_identifier():
+    print(find_printer_identifier())
 else:
-    print(terminal_colors.RED + "Error: No printer connected. Limited functionality." + terminal_colors.RESET)
+    print(terminal_colors.RED + "Error: No printer connected. Badges stay in the queue until a printer is connected." + terminal_colors.RESET)
 
 
 
@@ -253,4 +256,9 @@ def create_label_image(first_name, surname, company, position, eventname):
 def send_to_printer(path):
     printer = BrotherQLRaster(PRINTER_NAME)
     print_data = brother_ql.brother_ql_create.convert(printer, [path], LABEL_FORMAT, dither=False, hq=True)
-    send(print_data, PRINTER_IDENTIFIER)
+    printer_identifier = find_printer_identifier()
+    if not printer_identifier:
+        raise RuntimeError("No printer connected")
+    status = send(print_data, printer_identifier)
+    if status['outcome'] == 'error':
+        raise RuntimeError("Printer reported an error: {}".format(status.get('printer_state', {}).get('errors')))

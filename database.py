@@ -16,25 +16,33 @@ def setup_db_connection():
     return db_session
 
 
+# cancelled or refunded tickets have the status "Not Attending"
+ACTIVE_ATTENDEE_STATUSES = ("Attending", "Checked In")
+
+
 def get_current_attendees(db_session, event_id) -> List[Attendee]:
     attendees = db_session.query(Attendee).filter(Attendee.event_id == int(event_id)).all()
     return sorted(attendees, key=lambda x: x.surname, reverse=False)
 
 
+LAST_CHECK_TIME_FORMAT = '%Y-%m-%d %H:%M:%S%z'
+
+
 def get_last_check_time(db_session):
     last_checked_time = db_session.query(Configuration).filter(Configuration.config_key == "last_checked_time").first()
-    f = '%Y-%m-%d %H:%M:%S%z'
     if last_checked_time:
-        to_return = datetime.datetime.strptime(last_checked_time.config_value, f)
-        last_checked_time.config_value = datetime.datetime.now(pytz.utc).strftime(f)
-        db_session.commit()
-        return to_return
+        return datetime.datetime.strptime(last_checked_time.config_value, LAST_CHECK_TIME_FORMAT)
+    return datetime.datetime.now(pytz.utc) - datetime.timedelta(days=360)
+
+
+def set_last_check_time(db_session, check_time):
+    # only called after a successful Eventbrite sync, so a failed request is retried with the old time
+    last_checked_time = db_session.query(Configuration).filter(Configuration.config_key == "last_checked_time").first()
+    if last_checked_time:
+        last_checked_time.config_value = check_time.strftime(LAST_CHECK_TIME_FORMAT)
     else:
-        current_time = datetime.datetime.now(pytz.utc)
-        t = Configuration(config_key="last_checked_time", config_value=current_time.strftime(f))
-        db_session.add(t)
-        db_session.commit()
-        return datetime.datetime.now(pytz.utc) - datetime.timedelta(days=360)
+        db_session.add(Configuration(config_key="last_checked_time", config_value=check_time.strftime(LAST_CHECK_TIME_FORMAT)))
+    db_session.commit()
 
 
 def reset_last_check_time(db_session):
@@ -103,7 +111,11 @@ def manual_add_to_print_queue(db_session, fname, lname, position, company, confe
    
 def add_all_attendees_to_queue(db_session, date_from, date_to):
     print("Date from: {}, date to: {}".format(date_from, date_to))
-    attendees = db_session.query(Attendee).filter(and_(Attendee.order_date > date_from, Attendee.order_date < date_to)).order_by(Attendee.surname.desc()).all()
+    attendees = db_session.query(Attendee).filter(and_(
+        Attendee.order_date > date_from,
+        Attendee.order_date < date_to,
+        Attendee.status.in_(ACTIVE_ATTENDEE_STATUSES),
+    )).order_by(Attendee.surname.desc()).all()
     for attendee in attendees:
         db_session.add(PrintQueue(name="{} {}".format(attendee.first_name, attendee.surname), order_id=attendee.order_id, attendee_id=attendee.attendee_id, printed=False))
     db_session.commit()
