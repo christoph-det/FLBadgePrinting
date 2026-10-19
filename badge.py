@@ -37,6 +37,12 @@ LEFT_MARGIN = 60
 RIGHT_MARGIN = 60
 TEXT_WIDTH = PRINTABLE_SIZE[0] - LEFT_MARGIN - RIGHT_MARGIN
 
+# thin frame around the badge as a design element
+DRAW_BORDER = True
+BORDER_INSET = 18
+BORDER_WIDTH = 3
+BORDER_RADIUS = 22
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FONT_DIR = os.path.join(BASE_DIR, "fonts")
 FONT_DISPLAY_REGULAR = os.path.join(FONT_DIR, "InterDisplay-Regular.ttf")
@@ -171,8 +177,9 @@ def render_label_image(first_name, surname, company, position, eventname):
     center_x = PRINTABLE_SIZE[0] // 2
 
     # no logo: the label is stuck onto an A6 card that already carries it
-    top_margin = 24
-    bottom_margin = 22
+    frame_space = BORDER_INSET + BORDER_WIDTH if DRAW_BORDER else 0
+    top_margin = 24 + frame_space
+    bottom_margin = 22 + frame_space
 
     # footer: event name, tracked uppercase
     footer_font = ImageFont.truetype(FONT_MEDIUM, 25)
@@ -233,6 +240,11 @@ def render_label_image(first_name, surname, company, position, eventname):
             y += divider_height
         else:
             y = draw_centered_block(d, y, text, font, 2)
+
+    if DRAW_BORDER:
+        d.rounded_rectangle(
+            (BORDER_INSET, BORDER_INSET, PRINTABLE_SIZE[0] - 1 - BORDER_INSET, PRINTABLE_SIZE[1] - 1 - BORDER_INSET),
+            radius=BORDER_RADIUS, outline="black", width=BORDER_WIDTH)
 
     # pure black and white for crisp thermal printing
     img = img.point(lambda value: 0 if value < 160 else 255, mode='1')
