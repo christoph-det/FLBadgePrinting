@@ -174,23 +174,19 @@ def render_label_image(first_name, surname, company, position, eventname):
     top_margin = 24
     bottom_margin = 22
 
-    # footer: event name, tracked uppercase between two short rules
+    # footer: event name, tracked uppercase
     footer_font = ImageFont.truetype(FONT_MEDIUM, 25)
     footer_text = eventname.upper()
     footer_y = PRINTABLE_SIZE[1] - bottom_margin - line_height(footer_font)
     footer_width = 0
     while footer_text:
         footer_width = sum(d.textlength(c, font=footer_font) for c in footer_text) + 5 * (len(footer_text) - 1)
-        if footer_width <= TEXT_WIDTH - 200:
+        if footer_width <= TEXT_WIDTH:
             break
         footer_font = ImageFont.truetype(FONT_MEDIUM, footer_font.size - 1)
         footer_y = PRINTABLE_SIZE[1] - bottom_margin - line_height(footer_font)
     if footer_text:
         draw_tracked_text(d, footer_y, footer_text, footer_font, 5)
-        rule_y = footer_y + line_height(footer_font) // 2
-        gap = 24
-        d.line((center_x - footer_width / 2 - gap - 60, rule_y, center_x - footer_width / 2 - gap, rule_y), fill="black", width=2)
-        d.line((center_x + footer_width / 2 + gap, rule_y, center_x + footer_width / 2 + gap + 60, rule_y), fill="black", width=2)
 
     # content: first name, surname (dominant), divider, company, position
     content_top = top_margin
@@ -204,11 +200,11 @@ def render_label_image(first_name, surname, company, position, eventname):
         return divider_height if kind == "divider" else text_block_height(text, font, 2)
 
     # shrink everything step by step until the content fits between header and footer
-    for scale in [1.0, 0.94, 0.88, 0.82, 0.76, 0.7]:
-        first_name_text, first_name_font = fit_wrapped_text(d, first_name, FONT_DISPLAY_REGULAR, round(64 * scale), 34, TEXT_WIDTH, 80, max_lines=1)
-        surname_text, surname_font = fit_wrapped_text(d, surname, FONT_DISPLAY_BOLD, round(108 * scale), 44, TEXT_WIDTH, 270, max_lines=2)
-        company_text, company_font = fit_wrapped_text(d, company, FONT_DISPLAY_SEMIBOLD, round(68 * scale), 32, TEXT_WIDTH, 180, max_lines=2)
-        position_text, position_font = fit_wrapped_text(d, position, FONT_REGULAR, round(46 * scale), 28, TEXT_WIDTH, 120, max_lines=2)
+    for scale in [1.0, 0.94, 0.88, 0.82, 0.76, 0.7, 0.64, 0.58]:
+        first_name_text, first_name_font = fit_wrapped_text(d, first_name, FONT_DISPLAY_REGULAR, round(72 * scale), 34, TEXT_WIDTH, 90, max_lines=1)
+        surname_text, surname_font = fit_wrapped_text(d, surname, FONT_DISPLAY_BOLD, round(130 * scale), 44, TEXT_WIDTH, 300, max_lines=2)
+        company_text, company_font = fit_wrapped_text(d, company, FONT_DISPLAY_SEMIBOLD, round(86 * scale), 32, TEXT_WIDTH, 215, max_lines=2)
+        position_text, position_font = fit_wrapped_text(d, position, FONT_REGULAR, round(50 * scale), 28, TEXT_WIDTH, 130, max_lines=2)
 
         divider_gap = round(34 * scale)
         info_gap = round(10 * scale)
