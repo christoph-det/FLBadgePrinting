@@ -2,6 +2,10 @@ import terminal_colors
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 from time import sleep
+import logging
+
+# brother_ql still imports its own deprecated module internally; hide that warning
+logging.getLogger('brother_ql.devicedependent').setLevel(logging.ERROR)
 
 import brother_ql
 from brother_ql.raster import BrotherQLRaster
