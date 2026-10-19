@@ -8,11 +8,8 @@ from sqlalchemy import and_
 import badge
 from models import *
 
-import os
-
 def setup_db_connection():
-    file_path = os.path.abspath(os.getcwd())+"\database_badge.db"
-    thread_engine = create_engine('sqlite:///' + file_path + '?check_same_thread=False')
+    thread_engine = create_engine('sqlite:///' + DB_PATH + '?check_same_thread=False')
     Base.metadata.bind = thread_engine
     DBParent = sessionmaker(bind=thread_engine)
     db_session = DBParent()

@@ -71,6 +71,7 @@ fabric.properties
 venv/
 secrets/config.py
 britebadge.db
+database_badge.db
 generated_badge.png
 
 .DS_Store

@@ -5,8 +5,8 @@ from sqlalchemy.orm import relationship
 import os
 
 Base = declarative_base()
-file_path = os.path.abspath(os.getcwd())+"\database_badge.db"
-engine = create_engine('sqlite:///' + file_path + '?check_same_thread=False')
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "database_badge.db")
+engine = create_engine('sqlite:///' + DB_PATH + '?check_same_thread=False')
 
 
 class Configuration(Base):
