@@ -123,6 +123,9 @@ def balance_two_lines(draw, words, font):
 def fit_wrapped_text(draw, text, font_face, max_size, min_size, max_width, max_height, max_lines=2):
     for size in range(max_size, min_size - 1, -1):
         font = ImageFont.truetype(font_face, size)
+        # shrink rather than break a long word mid-word; breaking is only the fallback at min_size
+        if any(get_text_size(draw, word, font)[0] > max_width for word in text.split()):
+            continue
         wrapped_text = wrap_text_to_width(draw, text, font, max_width, max_lines)
         width, height = get_text_size(draw, wrapped_text, font)
         if width <= max_width and height <= max_height:
