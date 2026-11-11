@@ -52,23 +52,32 @@ def reset_last_check_time(db_session):
         db_session.commit()
 
 
+# fields that can be edited in Eventbrite after the order (e.g. a ticket reassigned to a colleague)
+SYNCED_ATTENDEE_FIELDS = ("first_name", "surname", "company", "position", "ticket_name", "event_name")
+
+
 def compare_attendees(db_session, current_attendees: List[Attendee], new_attendees: List[Attendee]):
+    current_by_id = {attendee.attendee_id: attendee for attendee in current_attendees}
     for new_attendee in new_attendees:
-        for current_attendee in current_attendees:
-            if new_attendee.attendee_id == current_attendee.attendee_id:
-                if current_attendee.status != new_attendee.status:
-                    print("Updated {} from {} to {}".format(current_attendee.first_name, current_attendee.status, new_attendee.status))
-                    current_attendee.status = new_attendee.status
-
-                    if new_attendee.status == "Checked In":
-                        print("Printing label for {} {}".format(new_attendee.first_name, new_attendee.surname))
-                        db_session.add(PrintQueue(name="{} {}".format(new_attendee.first_name, new_attendee.surname), order_id=current_attendee.order_id, attendee_id=new_attendee.attendee_id, printed=False))
-
-                        db_session.commit()
-
-                break
-        else:
+        current_attendee = current_by_id.get(new_attendee.attendee_id)
+        if current_attendee is None:
             db_session.add(new_attendee)
+            continue
+
+        # copy edited profile data before handling the status, so a badge queued below prints the new name
+        for field in SYNCED_ATTENDEE_FIELDS:
+            new_value = getattr(new_attendee, field)
+            if getattr(current_attendee, field) != new_value:
+                print("Updated {} of attendee {} from {!r} to {!r}".format(field, current_attendee.attendee_id, getattr(current_attendee, field), new_value))
+                setattr(current_attendee, field, new_value)
+
+        if current_attendee.status != new_attendee.status:
+            print("Updated {} from {} to {}".format(current_attendee.first_name, current_attendee.status, new_attendee.status))
+            current_attendee.status = new_attendee.status
+
+            if new_attendee.status == "Checked In":
+                print("Printing label for {} {}".format(new_attendee.first_name, new_attendee.surname))
+                db_session.add(PrintQueue(name="{} {}".format(new_attendee.first_name, new_attendee.surname), order_id=current_attendee.order_id, attendee_id=new_attendee.attendee_id, printed=False))
     db_session.commit()
 
 
